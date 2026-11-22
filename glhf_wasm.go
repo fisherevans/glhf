@@ -214,10 +214,10 @@ func NewTexture(width, height int, smooth bool, pixels []uint8) *Texture {
 	return t
 }
 
-func (t *Texture) ID() uint32    { return t.id }
-func (t *Texture) Width() int    { return t.width }
-func (t *Texture) Height() int   { return t.height }
-func (t *Texture) Smooth() bool  { return t.smooth }
+func (t *Texture) ID() uint32       { return t.id }
+func (t *Texture) Width() int       { return t.width }
+func (t *Texture) Height() int      { return t.height }
+func (t *Texture) Smooth() bool     { return t.smooth }
 func (t *Texture) Handle() js.Value { return t.handle }
 
 func (t *Texture) SetSmooth(smooth bool) {
@@ -471,8 +471,7 @@ func (vs *VertexSlice) SetVertexData(data []float32) {
 		return
 	}
 	copy(vs.va.shadow[vs.i*vs.Stride():], data)
-	gl.Call("bufferSubData", glEnum("ARRAY_BUFFER"),
-		vs.i*vs.va.stride, float32ToJS(data))
+	uploadVertexFloats(vs.i*vs.va.stride, data)
 }
 
 func (vs *VertexSlice) VertexData() []float32 {

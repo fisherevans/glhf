@@ -16,6 +16,8 @@ var (
 	glReady        bool
 	uint8ArrayCtor js.Value
 	f32ArrayCtor   js.Value
+	vertexBytes    js.Value
+	vertexByteCap  int
 )
 
 // SetContext installs the WebGL2 rendering context used by all glhf calls.
@@ -49,6 +51,19 @@ func float32ToJS(f []float32) js.Value {
 	b := unsafe.Slice((*byte)(unsafe.Pointer(&f[0])), len(f)*4)
 	u8 := uint8ToJS(b)
 	return f32ArrayCtor.New(u8.Get("buffer"), u8.Get("byteOffset"), len(f))
+}
+
+// Vertex uploads are synchronous on the single WebGL context. Keep one
+// staging buffer at the high-water size instead of allocating a JS array for
+// every vertex submission.
+func uploadVertexFloats(byteOffset int, data []float32) {
+	bytes := unsafe.Slice((*byte)(unsafe.Pointer(&data[0])), len(data)*4)
+	if len(bytes) > vertexByteCap {
+		vertexByteCap = max(len(bytes), vertexByteCap*2)
+		vertexBytes = uint8ArrayCtor.New(vertexByteCap)
+	}
+	js.CopyBytesToJS(vertexBytes, bytes)
+	gl.Call("bufferSubData", glEnum("ARRAY_BUFFER"), byteOffset, vertexBytes, 0, len(bytes))
 }
 
 // float32FromJS copies a JS Float32Array back into a Go float32 slice.
